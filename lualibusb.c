@@ -243,7 +243,7 @@ static int l_usb_control_msg(lua_State *L) {
 	int timeout = lua_tonumber(L, 7);
 
 	//make a copy just in case (why it isn't const?)
-	char *bytes_copy=(char*)malloc(size);
+	char bytes_copy[size];
 	memcpy(bytes_copy, bytes, size);
 
 	int ret = usb_control_msg(dev_handle, requesttype, request,
@@ -265,7 +265,7 @@ static int l_usb_get_string_simple(lua_State *L) {
 	size_t buflen = lua_tonumber(L, 3);  /* get 3rd argument, int */
 
 	if (buflen==0) { buflen=255; }  //default len
-	char *buf=(char*)malloc(buflen);
+	char buf[buflen];
 
 	int ret = usb_get_string_simple(dev_handle, index, buf, buflen);
 
@@ -286,7 +286,7 @@ static int l_usb_bulk_write(lua_State *L) {
 	const char *bytes = lua_tolstring(L, 3, &size);
 	int timeout = lua_tonumber (L, 4);
 
-	int ret = usb_bulk_write(dev_handle, ep, bytes, size, timeout);
+	int ret = usb_bulk_write(dev_handle, ep, (char*)bytes, size, timeout);
 
 	if( ret < 0 ) {
 		lua_pushnil(L);
@@ -302,10 +302,10 @@ static int l_usb_bulk_write(lua_State *L) {
 static int l_usb_bulk_read(lua_State *L) {
 	struct usb_dev_handle * dev_handle = lua_touserdata(L, 1);
 	int ep = lua_tonumber(L, 2);
-	int size = lua_tonumber (L, 3);
-	int timeout = lua_tonumber (L, 4);
+	int size = lua_tonumber(L, 3);
+	int timeout = lua_tonumber(L, 4);
 
-	char *bytes=(char*)malloc(size);
+	char bytes[size];
 	int ret = usb_bulk_read(dev_handle, ep, bytes, size, timeout);
 
 	if( ret < 0 ) {
@@ -313,7 +313,7 @@ static int l_usb_bulk_read(lua_State *L) {
 		lua_pushinteger(L, ret);
 		return 2;
 	} else{
-		lua_pushlstring (L, bytes, ret);
+		lua_pushlstring(L, bytes, ret);
 		return 1; /* number of results */
 	}
 }
@@ -324,7 +324,7 @@ static int l_usb_interrupt_write(lua_State *L) {
 	const char *bytes = lua_tolstring(L, 3, &size);
 	int timeout = lua_tonumber (L, 4);
 
-	int ret = usb_interrupt_write(dev_handle, ep, bytes, size, timeout);
+	int ret = usb_interrupt_write(dev_handle, ep, (char*)bytes, size, timeout);
 
 	if( ret < 0 ) {
 		lua_pushnil(L);
@@ -460,7 +460,12 @@ static void luaL_setfuncs (lua_State *L, const luaL_Reg *l, int nup) {
 }
 #endif
 
+/* This change was maked to support windows compiling */
+#ifdef WINDOWS
+__declspec(dllexport) int luaopen_libusb(lua_State *L) {
+#else
 int luaopen_libusb(lua_State *L) {
+#endif
 	usb_init();
 	usb_find_busses();
 	usb_find_devices();
