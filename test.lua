@@ -7,8 +7,7 @@ http://luaforge.net/projects/lualibusb
 License at file end. 
 ]]
 
-
-assert(package.loadlib("Debug/libluausb.so","luaopen_libusb"))()
+libusb = require 'libusb'
 
 --libusb.find_busses()
 --libusb.find_devices()
@@ -59,7 +58,7 @@ end
 
 print ("\n------------------------------------")
 print ("-- Interface settings:", last_device)
-local altsettings=libusb.interface_alt_settings(config.interface)
+local altsettings = libusb.interface_alt_settings(config.interface)
 for k, v in pairs(altsettings) do
 	print ("+ Alternative", k, v)
 	for ka, va in pairs(v) do
